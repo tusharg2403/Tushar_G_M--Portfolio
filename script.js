@@ -276,13 +276,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-// --- ADVANCED LIVE ANALYTICS FLASHLIGHT ENGINE ---
+// --- LIVE ANALYTICS FLASHLIGHT ENGINE ---
     const canvas = document.getElementById('analytics-bg');
     if (canvas) {
         const ctx = canvas.getContext('2d');
         let width, height;
         let timeOffset = 0;
 
+        // Make canvas fit the screen
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
@@ -290,112 +291,74 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', resize);
         resize();
 
-        // Track Flashlight position
+        // 1. Update the Flashlight position
         document.addEventListener('mousemove', (e) => {
             canvas.style.setProperty('--mouse-x', `${e.clientX}px`);
             canvas.style.setProperty('--mouse-y', `${e.clientY}px`);
         });
 
-        // Floating Metrics
-        const metrics = Array.from({ length: 30 }).map(() => ({
+        // 2. Generate random "Data Metrics" that will float around
+        const metrics = Array.from({ length: 40 }).map(() => ({
             x: Math.random() * window.innerWidth,
             y: Math.random() * window.innerHeight,
             value: Math.random() * 100,
-            label: ['VOL', 'MACD', 'RSI', 'EPS', 'P/E', 'BETA'][Math.floor(Math.random() * 6)],
-            speed: 0.1 + Math.random() * 0.3
+            label: ['ACC', 'RMSE', 'LOSS', 'VAL', 'PRED', 'F1-SCORE'][Math.floor(Math.random() * 6)],
+            speed: 0.2 + Math.random() * 0.5
         }));
 
+        // 3. The Animation Loop
         function drawLiveAnalytics() {
             ctx.clearRect(0, 0, width, height);
-            timeOffset += 1; // Animation speed
+            timeOffset += 1; // Controls the speed of the moving graphs
 
-            // 1. BACKGROUND GRID
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            // --- Draw Background Grid ---
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            for(let x = 0; x < width; x += 50) { ctx.moveTo(x, 0); ctx.lineTo(x, height); }
-            for(let y = 0; y < height; y += 50) { ctx.moveTo(0, y); ctx.lineTo(width, y); }
+            for(let x = 0; x < width; x += 40) { ctx.moveTo(x, 0); ctx.lineTo(x, height); }
+            for(let y = 0; y < height; y += 40) { ctx.moveTo(0, y); ctx.lineTo(width, y); }
             ctx.stroke();
 
-            // 2. SCROLLING STOCK CANDLESTICK CHART (Bottom Half)
-            const candleWidth = 6;
-            const spacing = 12;
-            const startX = (timeOffset * 0.5) % spacing; // Smooth scrolling left
-            
-            for (let i = 0; i < width / spacing + 2; i++) {
-                let x = i * spacing - startX;
-                // Complex math to generate realistic-looking, infinitely scrolling stock data
-                let pseudoTime = i + Math.floor(timeOffset * 0.5 / spacing);
-                let open = Math.sin(pseudoTime * 0.1) * 40 + Math.cos(pseudoTime * 0.05) * 30 + (height * 0.7);
-                let close = Math.sin((pseudoTime + 1) * 0.1) * 40 + Math.cos((pseudoTime + 1) * 0.05) * 30 + (height * 0.7);
-                let high = Math.max(open, close) + Math.abs(Math.sin(pseudoTime * 0.3) * 20);
-                let low = Math.min(open, close) - Math.abs(Math.cos(pseudoTime * 0.3) * 20);
-
-                // Green for bullish (price went up), Red for bearish (price went down)
-                let isBullish = close >= open;
-                ctx.strokeStyle = isBullish ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'; 
-                ctx.fillStyle = isBullish ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)';
-
-                // Draw Wick (High to Low line)
-                ctx.beginPath();
-                ctx.moveTo(x + candleWidth / 2, high);
-                ctx.lineTo(x + candleWidth / 2, low);
-                ctx.stroke();
-
-                // Draw Candle Body (Open to Close rectangle)
-                ctx.fillRect(x, Math.min(open, close), candleWidth, Math.max(1, Math.abs(close - open)));
-            }
-
-            // 3. DYNAMIC BAR CHART (Bottom Left)
-            for(let i = 0; i < 15; i++) {
-                let x = 40 + i * 18;
-                // Make the bars bounce up and down smoothly
-                let barHeight = 20 + Math.abs(Math.sin((i * 10 + timeOffset) * 0.04) * 80);
-                ctx.fillStyle = `rgba(0, 210, 255, ${0.1 + barHeight / 200})`;
-                ctx.fillRect(x, height - 40 - barHeight, 10, barHeight);
-            }
-
-            // 4. ROTATING DONUT CHART (Top Right)
-            let cx = width - 150;
-            let cy = 150;
-            let r = 45;
-            ctx.lineWidth = 12;
-            
-            // Blue Arc
-            ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)';
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, timeOffset * 0.015, timeOffset * 0.015 + Math.PI * 1.2);
-            ctx.stroke();
-
-            // Cyan Arc
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.8)';
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, timeOffset * 0.015 + Math.PI * 1.3, timeOffset * 0.015 + Math.PI * 1.9);
-            ctx.stroke();
-
-            // 5. MOVING LINE GRAPH (Top Half)
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.5)';
+            // --- Draw Moving Line Graph 1 (Cyan) ---
+            ctx.strokeStyle = '#00d2ff';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            for(let x = 0; x < width; x += 15) {
-                let y = (height * 0.3) + Math.cos((x - timeOffset * 1.5) * 0.005) * 60 + Math.sin(x * 0.02) * 15;
+            for(let x = 0; x < width; x += 10) {
+                // Complex math to make it look like a real fluctuating data trend
+                let y = (height * 0.4) + Math.sin((x + timeOffset) * 0.01) * 60 + Math.sin((x + timeOffset * 2) * 0.03) * 20;
                 if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
 
-            // 6. TICKING DATA METRICS
-            ctx.font = '600 12px "Courier New", monospace';
-            metrics.forEach(m => {
-                // Ticking numbers
-                if(Math.random() > 0.8) m.value += (Math.random() - 0.5) * 3;
-                
-                // Slowly drift left
-                m.x -= m.speed;
-                if (m.x < -50) m.x = width + 50; 
+            // --- Draw Moving Line Graph 2 (Blue) ---
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for(let x = 0; x < width; x += 15) {
+                let y = (height * 0.6) + Math.cos((x - timeOffset * 0.8) * 0.008) * 80 + Math.sin(x * 0.05) * 10;
+                if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
 
-                // Text
-                ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+            // --- Draw Ticking Data Metrics ---
+            ctx.font = '11px "Courier New", monospace';
+            metrics.forEach(m => {
+                // Randomly tick the numbers up and down slightly
+                if(Math.random() > 0.8) m.value += (Math.random() - 0.5) * 2;
+                
+                // Slowly drift the numbers to the left
+                m.x -= m.speed;
+                if (m.x < -100) m.x = width + 50; // Loop back to the right side
+
+                // Draw the text
+                ctx.fillStyle = '#00d2ff';
                 ctx.fillText(`${m.label}: ${m.value.toFixed(2)}`, m.x, m.y);
+                
+                // Draw a small node dot next to the text
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath();
+                ctx.arc(m.x - 10, m.y - 4, 2, 0, Math.PI * 2);
+                ctx.fill();
             });
 
             requestAnimationFrame(drawLiveAnalytics);

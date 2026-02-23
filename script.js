@@ -171,26 +171,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Form Submission Handling ---
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // We keep this to prevent page reload, but handle sending via Fetch
+            
             const submitBtn = contactForm.querySelector('.submit-btn');
             const originalText = submitBtn.innerHTML;
 
+            // 1. Change button to loading state
             submitBtn.innerHTML = 'Sending... <i class="fas fa-spinner fa-spin"></i>';
             submitBtn.disabled = true;
 
-            // Simulate form submission
-            setTimeout(() => {
-                submitBtn.innerHTML = 'Message Sent! <i class="fas fa-check"></i>';
-                submitBtn.style.background = '#22c55e'; // Success green
-                contactForm.reset();
+            const data = new FormData(contactForm);
 
-                setTimeout(() => {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.style.background = '';
-                    submitBtn.disabled = false;
-                }, 3000);
-            }, 1500);
+            try {
+                // 2. Actually send the data to Formspree
+                const response = await fetch(contactForm.action, {
+                    method: contactForm.method,
+                    body: data,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // 3. Formspree Success
+                    submitBtn.innerHTML = 'Message Sent! <i class="fas fa-check"></i>';
+                    submitBtn.style.background = '#22c55e'; // Success green
+                    contactForm.reset();
+                } else {
+                    // Formspree returned an error
+                    submitBtn.innerHTML = 'Error! Try Again <i class="fas fa-times"></i>';
+                    submitBtn.style.background = '#ef4444'; // Error red
+                }
+            } catch (error) {
+                // Network error
+                submitBtn.innerHTML = 'Error! Try Again <i class="fas fa-times"></i>';
+                submitBtn.style.background = '#ef4444'; // Error red
+            }
+
+            // 4. Reset button back to normal after 3 seconds
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.style.background = '';
+                submitBtn.disabled = false;
+            }, 3000);
         });
     }
 

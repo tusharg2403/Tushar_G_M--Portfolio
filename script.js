@@ -276,12 +276,94 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-// --- Analytics Flashlight Effect ---
-    const analyticsBg = document.getElementById('analytics-bg');
-    if (analyticsBg) {
+// --- LIVE ANALYTICS FLASHLIGHT ENGINE ---
+    const canvas = document.getElementById('analytics-bg');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let timeOffset = 0;
+
+        // Make canvas fit the screen
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 1. Update the Flashlight position
         document.addEventListener('mousemove', (e) => {
-            analyticsBg.style.setProperty('--mouse-x', `${e.clientX}px`);
-            analyticsBg.style.setProperty('--mouse-y', `${e.clientY}px`);
+            canvas.style.setProperty('--mouse-x', `${e.clientX}px`);
+            canvas.style.setProperty('--mouse-y', `${e.clientY}px`);
         });
+
+        // 2. Generate random "Data Metrics" that will float around
+        const metrics = Array.from({ length: 40 }).map(() => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            value: Math.random() * 100,
+            label: ['ACC', 'RMSE', 'LOSS', 'VAL', 'PRED', 'F1-SCORE'][Math.floor(Math.random() * 6)],
+            speed: 0.2 + Math.random() * 0.5
+        }));
+
+        // 3. The Animation Loop
+        function drawLiveAnalytics() {
+            ctx.clearRect(0, 0, width, height);
+            timeOffset += 1; // Controls the speed of the moving graphs
+
+            // --- Draw Background Grid ---
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for(let x = 0; x < width; x += 40) { ctx.moveTo(x, 0); ctx.lineTo(x, height); }
+            for(let y = 0; y < height; y += 40) { ctx.moveTo(0, y); ctx.lineTo(width, y); }
+            ctx.stroke();
+
+            // --- Draw Moving Line Graph 1 (Cyan) ---
+            ctx.strokeStyle = '#00d2ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let x = 0; x < width; x += 10) {
+                // Complex math to make it look like a real fluctuating data trend
+                let y = (height * 0.4) + Math.sin((x + timeOffset) * 0.01) * 60 + Math.sin((x + timeOffset * 2) * 0.03) * 20;
+                if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // --- Draw Moving Line Graph 2 (Blue) ---
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for(let x = 0; x < width; x += 15) {
+                let y = (height * 0.6) + Math.cos((x - timeOffset * 0.8) * 0.008) * 80 + Math.sin(x * 0.05) * 10;
+                if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // --- Draw Ticking Data Metrics ---
+            ctx.font = '11px "Courier New", monospace';
+            metrics.forEach(m => {
+                // Randomly tick the numbers up and down slightly
+                if(Math.random() > 0.8) m.value += (Math.random() - 0.5) * 2;
+                
+                // Slowly drift the numbers to the left
+                m.x -= m.speed;
+                if (m.x < -100) m.x = width + 50; // Loop back to the right side
+
+                // Draw the text
+                ctx.fillStyle = '#00d2ff';
+                ctx.fillText(`${m.label}: ${m.value.toFixed(2)}`, m.x, m.y);
+                
+                // Draw a small node dot next to the text
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath();
+                ctx.arc(m.x - 10, m.y - 4, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            requestAnimationFrame(drawLiveAnalytics);
+        }
+        
+        drawLiveAnalytics();
     }
 });

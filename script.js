@@ -276,4 +276,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+// --- Analytics Flashlight Effect ---
+    const analyticsBg = document.getElementById('analytics-bg');
+    if (analyticsBg) {
+        document.addEventListener('mousemove', (e) => {
+            analyticsBg.style.setProperty('--mouse-x', `${e.clientX}px`);
+            analyticsBg.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+    }
 });

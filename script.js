@@ -366,4 +366,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         drawLiveAnalytics();
     }
+// --- Fix: Make Back-to-Top Button Work ---
+    const topBtn = document.getElementById('back-to-top');
+    if (topBtn) {
+        topBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Stops the default jumpy behavior
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth' // Glides smoothly to the top
+            });
+        });
+    }
 });

@@ -377,4 +377,43 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+// --- HUD Language Ring Animation ---
+    const langRings = document.querySelectorAll('.ring-progress');
+    
+    if ('IntersectionObserver' in window) {
+        const langObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const circle = entry.target;
+                    const target = parseInt(circle.getAttribute('data-target'));
+                    const circumference = 251.2; // 2 * pi * r (r is 40)
+                    
+                    // 1. Animate the glowing line
+                    const offset = circumference - (target / 100) * circumference;
+                    circle.style.strokeDashoffset = offset;
+                    
+                    // 2. Animate the number counting up
+                    const percentText = circle.closest('.lang-ring-container').querySelector('.lang-percent');
+                    let current = 0;
+                    const speed = 20; // Lower is faster
+                    const increment = target / (1500 / speed); // Syncs roughly with 1.5s CSS animation
+                    
+                    const updateCounter = setInterval(() => {
+                        current += increment;
+                        if (current >= target) {
+                            percentText.innerText = target;
+                            clearInterval(updateCounter);
+                        } else {
+                            percentText.innerText = Math.ceil(current);
+                        }
+                    }, speed);
+                    
+                    langObserver.unobserve(circle); // Only animate once!
+                }
+            });
+        }, { threshold: 0.5 }); // Triggers when the card is 50% visible
+
+        langRings.forEach(ring => langObserver.observe(ring));
+    }
 });
